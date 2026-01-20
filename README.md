@@ -124,7 +124,7 @@ This repository is a **full research stack**, including:
 ❌ Wet-lab automation  
 ❌ Autonomous biological intervention  
 
-Any exploratory generative work must live in explicitly isolated modules and is out of scope for the core system, reverse engineering is possible and can be explored, adherence to proper ethics MUST be maintained.
+Any exploratory generative work must live in explicitly isolated modules and is out of scope for the core system, reverse engineering is possible and can be explored with permission granted by the repo owner "Jonathan Davanzo", adherence to proper ethics MUST be maintained.
 
 ## Getting Started
 

@@ -1,1 +1,40 @@
+variant_effect:
+  enabled: true
+  per_position: false
+  hidden: 1024
+  out_dim: 1
+  dropout: 0.1
+  weight: 1.0
 
+splicing:
+  enabled: true
+  hidden: 1024
+  out_dim: 1
+  dropout: 0.1
+  weight: 1.0
+
+regulatory:
+  enabled: true
+  n_tracks: 256
+  hidden: 2048
+  dropout: 0.1
+  weight: 1.0
+
+sv:
+  enabled: true
+  n_classes: 6
+  hidden: 1024
+  dropout: 0.1
+  weight: 1.0
+
+phasing:
+  enabled: true
+  hidden: 512
+  dropout: 0.1
+  weight: 0.5
+
+reliability:
+  enabled: true
+  hidden: 512
+  dropout: 0.1
+  weight: 0.5

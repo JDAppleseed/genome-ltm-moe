@@ -1,0 +1,8 @@
+[project]
+name = "genome-ltm-moe"
+version = "0.1.0"
+description = "Placeholder package for genome LTM-MoE scaffolding."
+requires-python = ">=3.10"
+
+[tool.black]
+line-length = 88

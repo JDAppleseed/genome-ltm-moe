@@ -1,0 +1,4 @@
+policy:
+  name: verifier-policy
+  max_passes: 3
+  abstain_threshold: 0.2

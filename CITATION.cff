@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "genome-ltm-moe"
+type: software
+authors:
+  - family-names: "Research"
+    given-names: "Genome LTM-MoE"
+version: 0.1.0
+license: MIT
+repository-code: "https://example.com/genome-ltm-moe"

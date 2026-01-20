@@ -1,0 +1,5 @@
+model:
+  name: trait-head
+  output_dim: 128
+calibration:
+  method: temperature

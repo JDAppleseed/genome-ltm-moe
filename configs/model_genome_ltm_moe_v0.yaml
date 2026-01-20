@@ -1,0 +1,7 @@
+model:
+  name: genome-ltm-moe-v0
+  experts: 8
+  hidden_size: 2048
+training:
+  batch_size: 32
+  max_steps: 10000

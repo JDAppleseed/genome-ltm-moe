@@ -1,0 +1,5 @@
+training:
+  optimizer: adamw
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  gradient_clip_norm: 1.0

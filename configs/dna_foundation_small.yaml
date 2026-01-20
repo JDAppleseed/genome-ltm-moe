@@ -1,0 +1,4 @@
+model:
+  name: dna-foundation-small
+  vocab: ["A", "C", "G", "T", "N"]
+  mask_rate: 0.15

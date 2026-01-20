@@ -1,65 +1,30 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Optional, Dict
+
 import torch
 import torch.nn as nn
 
+from .common import MLP, AttnPool
+
+
 @dataclass
 class PhasingOutput:
-    # Confidence that local phasing is consistent in this region
-    phase_conf: torch.Tensor       # (B,)
-    # Switch-error proxy logits (lower is better)
-    switch_logits: torch.Tensor    # (B,)
-    switch_prob: torch.Tensor      # (B,)
-    # Optional: haplotype separation score (signed)
-    hap_sep: torch.Tensor          # (B,)
-    confidence: torch.Tensor       # (B,)
+    phase_consistency_logit: torch.Tensor  # [B]
+    aux: Optional[Dict] = None
+
 
 class PhasingHead(nn.Module):
     """
-    Phasing head: estimates local phasing reliability based on tile/haplotype embeddings.
+    Stub phasing head: predicts a local phase consistency/confidence score.
     """
-    def __init__(self, d_in: int, hidden: int = 1024):
+    def __init__(self, d_model: int, hidden: int = 512, dropout: float = 0.1):
         super().__init__()
-        self.phase_head = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.switch_head = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.hap_sep_head = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.log_temp = nn.Parameter(torch.zeros(()))
-        self.conf_head = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden // 2),
-            nn.GELU(),
-            nn.Linear(hidden // 2, 1),
-        )
+        self.pool = AttnPool(d_model)
+        self.mlp = MLP(d_model, hidden, 1, dropout=dropout)
 
-    def forward(self, emb: torch.Tensor) -> PhasingOutput:
-        phase_conf = torch.sigmoid(self.phase_head(emb).squeeze(-1))
-
-        switch_logits_raw = self.switch_head(emb).squeeze(-1)
-        temp = torch.exp(self.log_temp).clamp(0.5, 5.0)
-        switch_logits = switch_logits_raw / temp
-        switch_prob = torch.sigmoid(switch_logits)
-
-        hap_sep = self.hap_sep_head(emb).squeeze(-1)
-        confidence = torch.sigmoid(self.conf_head(emb).squeeze(-1))
-
-        return PhasingOutput(
-            phase_conf=phase_conf,
-            switch_logits=switch_logits,
-            switch_prob=switch_prob,
-            hap_sep=hap_sep,
-            confidence=confidence,
-        )
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> PhasingOutput:
+        pooled = self.pool(x, mask=mask)
+        logit = self.mlp(pooled)[:, 0]
+        return PhasingOutput(phase_consistency_logit=logit, aux={"head": "phasing"})

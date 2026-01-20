@@ -43,6 +43,16 @@ def _extract_reliability(expert_outputs: Any) -> Optional[Any]:
     return getattr(expert_outputs, "reliability", None)
 
 
+def _as_like(value: Any, like: torch.Tensor) -> torch.Tensor:
+    if value is None:
+        return torch.zeros_like(like)
+    if not torch.is_tensor(value):
+        value = torch.as_tensor(value, device=like.device, dtype=like.dtype)
+    if value.shape != like.shape:
+        value = value.expand_as(like)
+    return value
+
+
 def verifier_loop(
     verifier: Callable[..., Any],
     tile_emb: torch.Tensor,
@@ -74,9 +84,12 @@ def verifier_loop(
         reliability = _extract_reliability(expert_outputs)
 
         if reliability is not None:
-            abstain_prob = torch.sigmoid(reliability.abstain_logit)
-            conflict_prob = torch.sigmoid(reliability.conflict_logit)
-            uncertainty_prob = torch.sigmoid(reliability.uncertainty_logit)
+            abstain_logit = _as_like(getattr(reliability, "abstain_logit", None), conf)
+            conflict_logit = _as_like(getattr(reliability, "conflict_logit", None), conf)
+            uncertainty_logit = _as_like(getattr(reliability, "uncertainty_logit", None), conf)
+            abstain_prob = torch.sigmoid(abstain_logit)
+            conflict_prob = torch.sigmoid(conflict_logit)
+            uncertainty_prob = torch.sigmoid(uncertainty_logit)
             abstained = (
                 (abstain_prob > policy.abstain_threshold)
                 | (conflict_prob > policy.conflict_threshold)

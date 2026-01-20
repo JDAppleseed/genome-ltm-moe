@@ -1,4 +1,7 @@
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
+
 from genomeltm.models.ambiguity import AmbiguityExpert
 
 def test_ambiguity():

@@ -11,6 +11,15 @@ from genomeltm.models.heads.task_bundle import TaskBundle
 from genomeltm.utils.config import load_yaml
 
 
+def deep_get(data: Dict[str, Any], path: list[str], default: Any = None) -> Any:
+    current: Any = data
+    for key in path:
+        if not isinstance(current, dict) or key not in current:
+            return default
+        current = current[key]
+    return current
+
+
 @dataclass
 class BackboneOutputs:
     x: torch.Tensor
@@ -40,7 +49,7 @@ class GenomeLTMMoE(nn.Module):
         self.model_cfg: Dict[str, Any] = {}
         if model_cfg_path:
             self.model_cfg = load_yaml(model_cfg_path)
-            d_model = self.model_cfg.get("backbone", {}).get("ssm_blocks", {}).get("d_model", d_model)
+            d_model = deep_get(self.model_cfg, ["backbone", "ssm_blocks", "d_model"], d_model)
 
         self.d_model = d_model
         self.input_dim = input_dim or d_model

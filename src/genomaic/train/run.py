@@ -5,28 +5,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-import torch
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, IterableDataset
-
-from genomaic.data.manifest import load_manifest
-from genomaic.data.sharding import deterministic_order, epoch_seed, shard_by_rank
-from genomaic.data.stream_fastq import FastqStreamingDataset, encode_sequences
-from genomaic.eval.expert_utilization import log_expert_utilization, summarize_expert_utilization
-from genomaic.models.moe_sequence import MoESequenceModel
-from genomaic.train.deepspeed_engine import initialize_deepspeed
-from genomaic.train.dist import get_local_rank, get_rank, get_world_size, init_distributed, is_main_process, seed_all
-from genomaic.train.ds_config import build_ds_config_from_yaml, load_training_yaml, validate_moe_zero_compat
-from genomaic.train.profiling import build_profiler, now, profile_step
-from genomaic.utils.ckpt import find_latest_checkpoint, load_checkpoint, save_checkpoint, safe_symlink_latest
-from genomaic.utils.config import load_yaml
-from genomeltm.models.dna_mlm import DNAMaskedLM, DNA_VOCAB
+try:
+    from torch.utils.data import DataLoader, IterableDataset
+except ModuleNotFoundError:  # pragma: no cover - handled in main()
+    DataLoader = object
+    IterableDataset = object
 
 
 @dataclass
 class Batch:
-    ids: torch.Tensor
-    labels: torch.Tensor
+    ids: "torch.Tensor"
+    labels: "torch.Tensor"
 
 
 class SyntheticTokenDataset(IterableDataset):
@@ -38,6 +27,8 @@ class SyntheticTokenDataset(IterableDataset):
         self.seed = seed
 
     def __iter__(self):
+        import torch
+
         generator = torch.Generator().manual_seed(self.seed)
         while True:
             batch = self.batch_tokens // self.seq_len
@@ -46,6 +37,10 @@ class SyntheticTokenDataset(IterableDataset):
 
 
 def mask_tokens(ids: torch.Tensor, mask_prob: float) -> Batch:
+    import torch
+
+    from genomeltm.models.dna_mlm import DNA_VOCAB
+
     labels = ids.clone()
     mask = torch.rand(ids.shape, device=ids.device) < mask_prob
     ids = ids.clone()
@@ -55,6 +50,12 @@ def mask_tokens(ids: torch.Tensor, mask_prob: float) -> Batch:
 
 
 def build_dataloader(cfg: Dict[str, Any], seed: int, epoch: int) -> DataLoader:
+    from genomaic.data.manifest import load_manifest
+    from genomaic.data.sharding import deterministic_order, epoch_seed, shard_by_rank
+    from genomaic.data.stream_fastq import FastqStreamingDataset, encode_sequences
+    from genomaic.train.dist import get_rank, get_world_size
+    from genomeltm.models.dna_mlm import DNA_VOCAB
+
     data_cfg = cfg.get("data", {})
     seq_len = int(data_cfg.get("seq_len", 1024))
     micro_batch = int(cfg.get("training", {}).get("micro_batch_size", 2))
@@ -82,6 +83,9 @@ def build_dataloader(cfg: Dict[str, Any], seed: int, epoch: int) -> DataLoader:
 
 
 def build_model(cfg: Dict[str, Any]) -> torch.nn.Module:
+    from genomaic.models.moe_sequence import MoESequenceModel
+    from genomeltm.models.dna_mlm import DNAMaskedLM, DNA_VOCAB
+
     model_cfg = cfg.get("model", {})
     model_type = model_cfg.get("type", "dna_mlm")
     if model_type == "dna_mlm":
@@ -117,6 +121,20 @@ def main() -> None:
     parser.add_argument("--config", type=str, default="configs/training_scale.yaml")
     parser.add_argument("--resume", type=str, default=None)
     args = parser.parse_args()
+
+    try:
+        import torch
+        import torch.nn.functional as F
+    except ModuleNotFoundError as exc:
+        raise SystemExit("PyTorch not installed. Install torch to run training.") from exc
+
+    from genomaic.eval.expert_utilization import log_expert_utilization, summarize_expert_utilization
+    from genomaic.train.deepspeed_engine import initialize_deepspeed
+    from genomaic.train.dist import get_local_rank, get_rank, get_world_size, init_distributed, is_main_process, seed_all
+    from genomaic.train.ds_config import build_ds_config_from_yaml, load_training_yaml, validate_moe_zero_compat
+    from genomaic.train.profiling import build_profiler, now, profile_step
+    from genomaic.utils.ckpt import find_latest_checkpoint, load_checkpoint, save_checkpoint, safe_symlink_latest
+    from genomaic.utils.config import load_yaml
 
     base_cfg = load_yaml("configs/training_defaults.yaml")
     run_cfg = load_training_yaml(args.config)
@@ -178,7 +196,6 @@ def main() -> None:
             batch = Batch(ids=batch_ids.ids.to(device), labels=batch_ids.labels.to(device))
         else:
             batch = mask_tokens(batch_ids.to(device), mask_prob=float(cfg.get("data", {}).get("mask_prob", 0.15)))
-            batch = Batch(ids=batch.ids.to(device), labels=batch.labels.to(device))
         data_wait = now() - load_start
 
         step_start = now()

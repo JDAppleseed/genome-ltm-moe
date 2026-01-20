@@ -1,4 +1,7 @@
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
+
 from genomeltm.models.heads import (
     VariantEffectHead, SplicingHead, RegulatoryHead,
     StructuralVariantHead, PhasingHead, ReliabilityHead

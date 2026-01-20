@@ -18,7 +18,7 @@ def deterministic_order(entries: Iterable[ShardEntry], epoch: int, seed: int = 0
     rng = (seed + epoch) % 9973
 
     def _stable_key(entry: ShardEntry) -> int:
-        digest = hashlib.md5(entry.path.encode(\"utf-8\")).hexdigest()
+        digest = hashlib.md5(entry.path.encode("utf-8")).hexdigest()
         return (int(digest, 16) + rng) % 1_000_000_007
 
     entries.sort(key=_stable_key)

@@ -1,4 +1,7 @@
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
+
 from genomeltm.models.dna_mlm import DNAMaskedLM, DNA_VOCAB
 
 def test_shapes():

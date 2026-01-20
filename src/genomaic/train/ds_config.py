@@ -39,8 +39,7 @@ def build_ds_config_from_yaml(cfg: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def validate_moe_zero_compat(ds_cfg: Dict[str, Any], cfg: Dict[str, Any]) -> None:
-    training_cfg = cfg.get("training", {})
-    uses_moe = bool(cfg.get("moe", {}).get("enabled", False)) or training_cfg.get("moe", {}).get("enabled", False)
+    uses_moe = bool(cfg.get("moe", {}).get("enabled", False) or cfg.get("training", {}).get("moe", {}).get("enabled", False))
     if not uses_moe:
         return
 

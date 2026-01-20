@@ -87,6 +87,7 @@ def main() -> None:
     parser.add_argument("--seq_len", type=int, default=128)
     parser.add_argument("--d_in", type=int, default=256)
     parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--log-every", type=int, default=20, help="Log every N steps.")
     parser.add_argument("--task-config", type=str, default="configs/task_heads.yaml")
     parser.add_argument("--model-config", type=str, default="configs/model_genome_ltm_moe_v0.yaml")
     parser.add_argument("--output", type=str, default="runs/trait_head")
@@ -132,7 +133,7 @@ def main() -> None:
         total_loss.backward()
         optimizer.step()
 
-        if step % 20 == 0:
+        if step % args.log_every == 0:
             loss_items = ", ".join(f"{k}={v.item():.4f}" for k, v in losses.items())
             print(f"step={step} {loss_items}")
 

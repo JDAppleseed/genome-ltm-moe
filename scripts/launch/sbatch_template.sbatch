@@ -12,6 +12,10 @@ CONFIG=${1:-configs/training_scale.yaml}
 
 mkdir -p logs
 
-module load cuda || true
+if command -v module >/dev/null 2>&1; then
+  module load cuda || echo "[warn] Could not load cuda module; ensure CUDA is available via container/modules."
+else
+  echo "[info] Environment modules not available; assuming CUDA provided by container/system."
+fi
 
 srun bash scripts/launch/torchrun_slurm.sh "${CONFIG}"

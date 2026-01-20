@@ -31,3 +31,7 @@
 - The laptop is only a control plane; data staging must happen near compute.
 - Deterministic sharding uses `rank` + `epoch` seeds and stable shard ordering.
 - Checkpoints include RNG state for reproducibility and resume.
+- Run `python scripts/dev/check_bidi_unicode.py` to ensure no bidi control characters slip into repo text files.
+- Local dev setup: `scripts/dev/bootstrap_env.sh` (creates venv + `pip install -e .[dev]`) then `scripts/dev/smoke_check.sh`.
+- Editable installs support `import genomaic` + `import genomeltm` without setting `PYTHONPATH`.
+- Remote env setup: `scripts/remote/ensure_env.sh` for repeatable cluster installs.

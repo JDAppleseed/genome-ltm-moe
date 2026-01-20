@@ -1,9 +1,23 @@
-fields:
-  - CHROM
-  - POS
-  - ID
-  - REF
-  - ALT
-  - QUAL
-  - FILTER
-  - INFO
+vcf_version: "4.3"
+
+info_fields:
+  - {id: IHG_ID, number: "1", type: String, description: "Internal Hypothesis Graph node ID", source: GenomeLTM, version: v0}
+  - {id: POST, number: "A", type: Float, description: "Posterior probability of ALT allele(s)", source: GenomeLTM, version: v0}
+  - {id: UNC, number: "1", type: Float, description: "Uncertainty score (entropy/variance proxy)", source: GenomeLTM, version: v0}
+  - {id: TECHSUP, number: ".", type: String, description: "Per-technology support summary", source: GenomeLTM, version: v0}
+  - {id: CONFLICT, number: "1", type: Integer, description: "Cross-tech conflict flag (0/1)", source: GenomeLTM, version: v0}
+  - {id: EVIDPTR, number: ".", type: String, description: "Pointers to internal evidence records", source: GenomeLTM, version: v0}
+
+format_fields:
+  - {id: GT, number: "1", type: String, description: "Genotype"}
+  - {id: GQ, number: "1", type: Integer, description: "Genotype quality"}
+  - {id: DP, number: "1", type: Integer, description: "Read depth"}
+  - {id: PL, number: "G", type: Integer, description: "Phred-scaled genotype likelihoods"}
+  - {id: PQ, number: "1", type: Float, description: "Learned per-sample quality scalar", source: GenomeLTM, version: v0}
+  - {id: TECHDP, number: ".", type: Integer, description: "Per-technology depths: ILL,PB,ONT", source: GenomeLTM, version: v0}
+
+filters:
+  - {id: LOWCONF, description: "Below confidence threshold"}
+  - {id: CONFLICT, description: "Cross-tech conflict unresolved"}
+  - {id: LOWCOV, description: "Insufficient depth/coverage"}
+  - {id: COMPLEX, description: "Complex region; interpret cautiously"}

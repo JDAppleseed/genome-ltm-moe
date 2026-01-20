@@ -24,7 +24,7 @@ def tensor_like(
     if value is None:
         if like is not None:
             return torch.full_like(like, float(default), dtype=resolved_dtype, device=resolved_device)
-        return torch.tensor(float(default), device=resolved_device, dtype=resolved_dtype or torch.float32)
+        return torch.tensor(float(default), device=resolved_device, dtype=resolved_dtype)
 
     if not torch.is_tensor(value):
         value = torch.as_tensor(value, device=resolved_device, dtype=resolved_dtype)

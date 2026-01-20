@@ -4,7 +4,8 @@ set -euo pipefail
 VENV_DIR=${VENV_DIR:-.venv}
 
 # shellcheck disable=SC1091
-source "scripts/dev/_venv_common.sh"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+source "${SCRIPT_DIR}/_venv_common.sh"
 
 ensure_venv "${VENV_DIR}"
 activate_venv "${VENV_DIR}"

@@ -124,33 +124,7 @@ This repository is a **full research stack**, including:
 ❌ Wet-lab automation  
 ❌ Autonomous biological intervention  
 
-Any exploratory generative work must live in explicitly isolated modules and is out of scope for the core system.
-
----
-
-## Repository Structure
-├── src/
-│   ├── genomaic/              # Main GenomAIc training + data stack
-│   │   ├── data/              # FASTQ streaming, sharding, manifests
-│   │   ├── models/            # Sequence + MoE model scaffolds
-│   │   ├── train/             # Distributed training (DeepSpeed)
-│   │   ├── eval/              # Expert utilization, metrics
-│   │   └── utils/             # Checkpointing, config helpers
-│   │
-│   └── genomeltm/             # Long-context + task head layer
-│       ├── models/            # GenomeLTM-MoE + task bundles
-│       ├── pipeline/          # Verifier loop
-│       ├── eval/              # Abstention & risk-coverage
-│       ├── agents/            # Dry-lab planner/executor
-│       └── utils/             # Shared tensor helpers
-│
-├── configs/                   # Training, MoE, verifier, agentic configs
-├── scripts/                   # Bootstrap, launch, resume, data tools
-├── tests/                     # Smoke, import, shape, task-head tests
-├── docs/                      # Design, scaling, ethics, paper outline
-├── pyproject.toml             # Editable packaging (src layout)
-└── README.md
----
+Any exploratory generative work must live in explicitly isolated modules and is out of scope for the core system, reverse engineering is possible and can be explored, adherence to proper ethics MUST be maintained.
 
 ## Getting Started
 
@@ -158,9 +132,12 @@ Any exploratory generative work must live in explicitly isolated modules and is 
 ```bash
 bash scripts/dev/bootstrap_env.sh
 source .venv/bin/activate
+````
 
 2. Run Smoke Checks
+````
 scripts/dev/smoke_check.sh
+````
 
 These checks:
 	•	compile Python
@@ -172,14 +149,19 @@ These checks:
 ⸻
 
 3. CPU Smoke Training (No GPU)
+````
 python -m genomaic.train.run \
   --config configs/training_cpu_smoke.yaml
+````
 
 ⸻
 
 4. Distributed Training (Example)
+````
 scripts/launch/torchrun_local.sh \
   configs/training_scale.yaml
+````
+
 SLURM templates are provided under scripts/launch/.
 
 ⸻
@@ -196,8 +178,8 @@ Development Principles
 
 Ethics & Safety
 	•	Human genomic data must be handled under appropriate IRB / DUA constraints
-	•	No automated medical decision-making
-	•	Abstention preferred over false certainty
+	•	No automated medical decision-making, a human MUST be involved during practical processes
+	•	Abstention preferred over false certainty, false positives or negatives must be strictly avoided
 	•	Clear separation between interpretation and action
 
 See docs/data_access_and_ethics.md.

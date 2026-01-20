@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import pathlib
-import sys
 
 BIDI_RANGES = [
     (0x202A, 0x202E),  # embedding/override

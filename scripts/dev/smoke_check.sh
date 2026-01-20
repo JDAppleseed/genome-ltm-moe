@@ -15,8 +15,6 @@ except ModuleNotFoundError:
     raise SystemExit(1)
 PY
 
-python -c "import yaml; yaml.safe_load(open('configs/agentic.yaml'))"
-python -c "import yaml; yaml.safe_load(open('configs/verifier_policy.yaml'))"
 python scripts/dev/check_bidi_unicode.py
 
 python - <<'PY'

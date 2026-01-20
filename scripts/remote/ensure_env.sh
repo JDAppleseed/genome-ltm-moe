@@ -3,15 +3,14 @@ set -euo pipefail
 
 VENV_DIR=${VENV_DIR:-.venv}
 
-if [[ ! -d "${VENV_DIR}" ]]; then
-  python -m venv "${VENV_DIR}"
-fi
-
 # shellcheck disable=SC1091
-source "${VENV_DIR}/bin/activate"
+source "scripts/dev/_venv_common.sh"
+
+ensure_venv "${VENV_DIR}"
+activate_venv "${VENV_DIR}"
 
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+install_editable "dev"
 
 python - <<'PY'
 try:

@@ -1,0 +1,4 @@
+Host genomaic-cluster
+  HostName login.example.edu
+  User yourname
+  IdentityFile ~/.ssh/id_ed25519

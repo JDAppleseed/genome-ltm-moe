@@ -1,24 +1,101 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional
+
 import torch
+
+from genomeltm.utils.config import load_yaml
+
+
+@dataclass
+class VerifierPolicy:
+    max_passes: int = 4
+    abstain_threshold: float = 0.8
+    conflict_threshold: float = 0.8
+    uncertainty_threshold: float = 0.8
+
 
 @dataclass
 class VerifierResult:
-    posterior: torch.Tensor       # (B,)
-    confidence: torch.Tensor      # (B,)
-    escalate_mask: torch.Tensor   # (B,) bool
+    posterior: torch.Tensor
+    confidence: torch.Tensor
+    escalate_mask: torch.Tensor
+    abstained: torch.Tensor
 
-def verifier_loop(verifier, tile_emb, retrieved_ctx, expert_outputs, passes_max=4, low_conf=0.95):
+
+def load_verifier_policy(path: str = "configs/verifier_policy.yaml") -> VerifierPolicy:
+    cfg = load_yaml(path)
+    policy = cfg.get("policy", cfg)
+    return VerifierPolicy(
+        max_passes=int(policy.get("max_passes", policy.get("passes_max", 4))),
+        abstain_threshold=float(policy.get("abstain_threshold", 0.8)),
+        conflict_threshold=float(policy.get("conflict_threshold", 0.8)),
+        uncertainty_threshold=float(policy.get("uncertainty_threshold", 0.8)),
+    )
+
+
+def _extract_reliability(expert_outputs: Any) -> Optional[Any]:
+    if expert_outputs is None:
+        return None
+    if isinstance(expert_outputs, dict) and "reliability" in expert_outputs:
+        return expert_outputs["reliability"]
+    return getattr(expert_outputs, "reliability", None)
+
+
+def verifier_loop(
+    verifier: Callable[..., Any],
+    tile_emb: torch.Tensor,
+    retrieved_ctx: Optional[Any],
+    expert_outputs: Optional[Any],
+    passes_max: Optional[int] = None,
+    low_conf: float = 0.95,
+    policy: Optional[VerifierPolicy] = None,
+    policy_path: str = "configs/verifier_policy.yaml",
+    rerun_fn: Optional[Callable[..., Dict[str, Any]]] = None,
+) -> VerifierResult:
     """
-    Multi-pass refinement loop (scaffold). Real implementation should:
-    - re-sample reads / expand retrieval for escalated regions
-    - update expert outputs and re-verify
+    Multi-pass refinement loop with abstention-aware gating.
+
+    If abstain/conflict/uncertainty exceed thresholds, the loop re-runs encoding
+    via `rerun_fn` (e.g., expand context or alternate routing). The loop is
+    capped at policy.max_passes and can abstain definitively.
     """
+    policy = policy or load_verifier_policy(policy_path)
+    max_passes = min(policy.max_passes, passes_max or policy.max_passes)
+
     post = None
     conf = None
     escalate = None
-    for _ in range(passes_max):
+    abstained = None
+
+    for _ in range(max_passes):
         post, conf, escalate = verifier(tile_emb, retrieved_ctx, expert_outputs)
-        if (conf >= low_conf).all():
+        reliability = _extract_reliability(expert_outputs)
+
+        if reliability is not None:
+            abstain_prob = torch.sigmoid(reliability.abstain_logit)
+            conflict_prob = torch.sigmoid(reliability.conflict_logit)
+            uncertainty_prob = torch.sigmoid(reliability.uncertainty_logit)
+            abstained = (
+                (abstain_prob > policy.abstain_threshold)
+                | (conflict_prob > policy.conflict_threshold)
+                | (uncertainty_prob > policy.uncertainty_threshold)
+            )
+            escalate = abstained if escalate is None else (escalate | abstained)
+        else:
+            abstained = torch.zeros_like(conf, dtype=torch.bool)
+
+        if (conf >= low_conf).all() and not abstained.any():
             break
-        # In a real system, you'd update retrieved_ctx / expert_outputs for escalate regions here.
-    return VerifierResult(posterior=post, confidence=conf, escalate_mask=escalate)
+
+        if rerun_fn is not None and escalate is not None and escalate.any():
+            rerun = rerun_fn(tile_emb=tile_emb, retrieved_ctx=retrieved_ctx, expert_outputs=expert_outputs, escalate=escalate)
+            tile_emb = rerun.get("tile_emb", tile_emb)
+            retrieved_ctx = rerun.get("retrieved_ctx", retrieved_ctx)
+            expert_outputs = rerun.get("expert_outputs", expert_outputs)
+
+    if abstained is None:
+        abstained = torch.zeros_like(conf, dtype=torch.bool)
+
+    return VerifierResult(posterior=post, confidence=conf, escalate_mask=escalate, abstained=abstained)

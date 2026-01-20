@@ -3,3 +3,17 @@ training:
   learning_rate: 0.0003
   weight_decay: 0.01
   gradient_clip_norm: 1.0
+  dist_backend: nccl
+  seed: 1337
+  log_every: 10
+  steps: 100
+  grad_accum: 1
+  micro_batch_size: 2
+  train_batch_size: 32
+  precision:
+    bf16: true
+  deepspeed:
+    enabled: false
+    config: "configs/deepspeed/zero2_moe.json"
+  checkpoint_freq: 100
+  eval_freq: 500

@@ -1,0 +1,45 @@
+training:
+  steps: 200
+  micro_batch_size: 2
+  train_batch_size: 32
+  grad_accum: 4
+  learning_rate: 0.0003
+  seed: 1337
+  log_every: 10
+  checkpoint_freq: 50
+  checkpoint_dir: "runs/ckpt"
+  resume_last: true
+  dist_backend: nccl
+  deepspeed:
+    enabled: true
+    config: "configs/deepspeed/zero2_moe.json"
+  precision:
+    bf16: true
+
+model:
+  type: "moe_mlm"
+  d_model: 512
+  n_layers: 4
+  n_experts: 4
+  d_ff: 1024
+
+moe:
+  enabled: true
+
+data:
+  synthetic: true
+  seq_len: 512
+  mask_prob: 0.15
+
+launch:
+  torchrun:
+    nproc_per_node: 8
+    nnodes: 2
+    rdzv_backend: c10d
+  slurm:
+    partition: "gpu"
+    nodes: 2
+    gpus_per_node: 8
+    cpus_per_task: 8
+    mem: "0"
+    time: "12:00:00"

@@ -1,0 +1,20 @@
+planner:
+  tasks:
+    - ingest
+    - analyze
+    - benchmark
+    - report
+
+data_access:
+  allowed_paths:
+    - /workspace/genome-ltm-moe
+
+tools:
+  ingest:
+    manifest_path: "data/manifest.yaml"
+  analyze:
+    manifest_path: "data/manifest.yaml"
+  benchmark:
+    suite: "baseline"
+  report:
+    format: "markdown"

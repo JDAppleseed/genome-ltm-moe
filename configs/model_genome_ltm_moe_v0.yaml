@@ -1,7 +1,60 @@
-model:
-  name: genome-ltm-moe-v0
-  experts: 8
-  hidden_size: 2048
-training:
-  batch_size: 32
-  max_steps: 10000
+project: GenomeLTM-MoE
+version: v0
+mode: research_only
+
+context:
+  effective_tokens_target: 10000000   # 10M effective context via memory+retrieval
+  hard_active_tokens_max: 262144      # active window after retrieval/summarization
+  tile_size_bp: 4096
+  supertile_size_bp: 262144
+
+modalities:
+  illumina_short_read: true
+  pacbio_hifi: true
+  ont_fastq: true
+  ont_raw_signal: optional  # POD5/FAST5 integration is optional
+
+backbone:
+  type: ssm_hyena_hybrid
+  conv_stem:
+    enabled: true
+    layers: 4
+    kernel_sizes: [7, 7, 11, 11]
+    strides: [1, 2, 2, 2]
+  ssm_blocks:
+    layers: 24
+    d_model: 2048
+    mlp_ratio: 4
+    norm: rmsnorm
+    dropout: 0.0
+
+moe:
+  enabled: true
+  router:
+    type: top2
+    capacity_factor: 1.25
+    jitter_noise: 0.01
+  experts:
+    count: 16
+    d_ff: 8192
+    specializations:
+      - ErrorModeExpert
+      - IndelHomopolymerExpert
+      - SpliceJunctionExpert
+      - CodingConstraintExpert
+      - RepeatSVExpert
+      - ImmuneComplexRegionExpert
+
+verifier:
+  enabled: true
+  type: ssm_hyena_verifier
+  layers: 12
+  d_model: 3072
+  passes_max: 4
+  low_conf_threshold: 0.95
+  abstain_threshold: 0.80
+
+outputs:
+  ihg: true
+  vcf_v4_3: true
+  bcf2: recommended

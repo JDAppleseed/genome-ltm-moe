@@ -1,115 +1,113 @@
-# Paper Outline (Repo-Mapped)
+# GenomAIc Paper Outline (Repo-Mapped)
 
-## Title
-GenomeLTM-MoE: Evidence-Grounded, Calibrated Genome Interpretation from Raw Multi-Platform Reads with Verifier Loops
+## Title (working)
+GenomAIc: Evidence-Grounded, Multi-Modal Genome Interpretation from Raw Reads with Calibrated Uncertainty
 
 ## Abstract
-(1 paragraph summary + key results)
+(1 paragraph summary; include: raw FASTQ-first, cross-tech fusion, MoE specialization, verifier + abstention, benchmarks)
 
 ## 1. Introduction
-- Motivation: false confidence in genomics; multi-tech reality
-- Why calibrated abstention matters
+- Motivation: raw-read noise + conflicting evidence are under-modeled
+- Why confidence + abstention matters
 - Contributions
 
-Repo mapping:
-- `docs/architecture.md`
-- `docs/abstention_and_ambiguity.md`
-- `docs/cross_tech_fusion.md`
+Repo anchors:
+- docs/architecture.md
+- docs/abstention_and_ambiguity.md
+- src/genomaic/models/task_bundle.py
 
 ## 2. Related Work
-- Sequence-to-function models (Enformer-like, AlphaGenome-like)
-- Variant calling (traditional + learned)
-- Long-context models (SSM/Hyena) and MoE + verification paradigms
+- Sequence-to-function models (AlphaGenome/Enformer-style)
+- Read-level modeling and variant calling pipelines
+- MoE + long-context architectures in bio
+- Agentic scientific copilots (CRISPR-GPT inspiration)
 
-Repo mapping:
-- `docs/references.md`
-- `docs/sequencing_platforms.md`
+Repo anchors:
+- docs/agentic_workflows_inspiration.md
+- docs/cross_tech_fusion.md
 
 ## 3. System Overview
-- FASTQ-first ingestion and noise modeling
-- Hierarchical memory and effective 10M–100M context
-- MoE experts + verifier pass
-- Internal Hypothesis Graph (IHG) and VCF projection
+- Inputs: Illumina/ONT/PacBio FASTQ; optional aligned evidence
+- Representation hierarchy: reads → tiles → long-range memory
+- Multi-head task suite + verifier loop
 
-Repo mapping:
-- `docs/architecture.md`
-- `schemas/internal_hypothesis_graph.schema.json`
-- `docs/vcf_projection.md`
+Repo anchors:
+- src/genomaic/models/*
+- src/genomaic/pipeline/*
+- configs/*.yaml
 
-## 4. Model
-4.1 Read Encoder  
-4.2 Tile Encoder + Memory Retrieval  
-4.3 MoE routing and expert specialization  
-4.4 Verifier loop and escalation policy  
-4.5 Task heads (variant effect, splicing, regulatory, SV, phasing, reliability)
+## 4. Model Architecture
+- Backbone (SSM/Hyena or equivalent)
+- Routing: MoE experts (repeat/SV/splice/error)
+- Heads (variant, splicing, regulatory, SV, phasing, reliability)
+- Calibration + abstention
 
-Repo mapping:
-- `docs/model_spec.md`
-- `src/genomeltm/models/*`
-- `src/genomeltm/models/heads/*`
-- `configs/task_heads.yaml` (if you add it)
+Repo anchors:
+- src/genomaic/models/heads/*
+- src/genomaic/models/moe_router.py (if present)
+- src/genomaic/eval/risk_coverage.py
 
 ## 5. Training Curriculum
-- Stage 1: denoising/corruption reversal
-- Stage 2: tile consensus
-- Stage 3: cross-tech alignment
-- Stage 4: supervised multi-task heads
-- Stage 5: verifier training + abstention
-- Stage 6: end-to-end tuning
+Stage 0: infra & synthetic
+Stage 1: denoise self-supervision
+Stage 2: consensus tiles
+Stage 3: cross-tech alignment
+Stage 4: functional multi-task supervision
+Stage 5: verifier + abstention tuning
+Stage 6: end-to-end finetune
 
-Repo mapping:
-- `docs/training_curriculum.md`
-- `scripts/train_stage*.py`
-- `configs/training_defaults.yaml`
+Repo anchors:
+- docs/training_curriculum.md
+- scripts/train_stage*.py
 
-## 6. Evaluation
-- Variant calling accuracy (PPV/TPR) with calibration
-- SV breakpoint metrics and size stratification
+## 6. Benchmarks & Evaluation
+- Variant accuracy by class and region
+- SV breakpoint tolerance & size-stratified recall
+- Calibration (ECE, reliability diagrams)
+- Risk-coverage curves; abstention utility
 - Cross-tech concordance gains
-- Risk-coverage curves (accuracy vs abstention)
-- Efficiency: throughput and cost per genome
 
-Repo mapping:
-- `docs/eval_suite.md`
-- `src/genomeltm/eval/*`
-- `scripts/eval_concordance.py`
+Repo anchors:
+- docs/eval_suite.md
+- src/genomaic/eval/*
+- src/genomaic/eval/risk_coverage.py
 
 ## 7. Results
-- Benchmark tables and key plots
-- Ablations: no-verifier, no-MoE, single-tech only
-- Failure cases and ambiguity behavior
+- Core benchmark tables
+- Ablations: no MoE / no verifier / single-tech
+- Scaling laws + compute
+- Failure cases and uncertainty exemplars
 
-Repo mapping:
-- `docs/eval_suite.md`
-- `src/genomeltm/eval/benchmarks.py`
+Repo anchors:
+- scripts/run_end_to_end.py
+- docs/compute_and_cost.md
 
 ## 8. Discussion
-- When to abstain vs decide
-- Implications for rare disease research and difficult loci
-- Limitations and future work
+- Where the approach helps most (rare disease, repeats, SV-heavy)
+- Limitations & data governance
+- Future work
 
-Repo mapping:
-- `docs/abstention_and_ambiguity.md`
-- `docs/roadmap_and_milestones.md`
+Repo anchors:
+- docs/data_access_and_ethics.md
+- SECURITY.md
 
-## 9. Ethics & Governance
-- Research-only boundary
-- Data governance and privacy
-- Auditability and reproducibility
+## 9. Methods (Reproducibility)
+- Data processing details
+- Training hyperparameters
+- Implementation notes
 
-Repo mapping:
-- `docs/data_access_and_ethics.md`
-- `SECURITY.md`
+Repo anchors:
+- pyproject.toml / requirements.txt
+- configs/*
+- src/genomaic/data/*
 
-## 10. Conclusion
-- Summary of contributions and impact
+## 10. Ethics & Safety
+- Privacy-first handling of human reads
+- Confidence reporting and abstention
+- Access control for sensitive workflows
+
+Repo anchors:
+- docs/data_access_and_ethics.md
 
 ## Appendices
-- VCF projection schema and custom INFO/FORMAT fields
-- Hyperparameters and compute budgets
-- Additional ablations
-
-Repo mapping:
-- `docs/vcf_projection.md`
-- `configs/*`
-- `docs/compute_and_cost.md`
+- Additional ablations, metrics, datasets, pseudo-code

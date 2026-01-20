@@ -1,6 +1,18 @@
-model:
-  name: genome-ltm-moe-v1-b200
-  experts: 16
-  hidden_size: 3072
-hardware:
-  target: b200
+inherits: model_genome_ltm_moe_v0.yaml
+
+hardware_profile:
+  target: nvidia_b200
+  vram_per_gpu_gb: 180
+
+scaling:
+  tensor_parallel: 4
+  pipeline_parallel: 2
+  expert_parallel: 2
+  data_parallel: auto
+
+training:
+  microbatch_tokens: 65536
+  grad_accum_steps: 16
+  activation_checkpointing: true
+  precision: bf16
+  optimizer: adamw_8bit

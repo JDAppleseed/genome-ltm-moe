@@ -1,3 +1,10 @@
 ##fileformat=VCFv4.3
-##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+##source=GenomeLTM-MoE
+##INFO=<ID=IHG_ID,Number=1,Type=String,Description="Internal Hypothesis Graph node ID",Source="GenomeLTM",Version="v0">
+##INFO=<ID=POST,Number=A,Type=Float,Description="Posterior probability of ALT allele(s)",Source="GenomeLTM",Version="v0">
+##INFO=<ID=UNC,Number=1,Type=Float,Description="Uncertainty score",Source="GenomeLTM",Version="v0">
+##INFO=<ID=TECHSUP,Number=.,Type=String,Description="Per-technology support summary",Source="GenomeLTM",Version="v0">
+##FILTER=<ID=LOWCONF,Description="Below confidence threshold">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+#CHROM  POS ID  REF ALT QUAL FILTER  INFO FORMAT  SAMPLE

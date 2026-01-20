@@ -1,6 +1,18 @@
-model:
-  name: genome-ltm-moe-v2-gb300
-  experts: 32
-  hidden_size: 4096
-hardware:
-  target: gb300
+inherits: model_genome_ltm_moe_v0.yaml
+
+hardware_profile:
+  target: nvidia_gb300_class
+  vram_per_gpu_gb: 288
+
+context:
+  hard_active_tokens_max: 524288
+
+moe:
+  experts:
+    count: 32
+    d_ff: 12288
+
+verifier:
+  layers: 16
+  d_model: 4096
+  passes_max: 6

@@ -1,16 +1,62 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "InternalHypothesisGraph",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Internal Hypothesis Graph (IHG)",
   "type": "object",
   "properties": {
-    "nodes": {
+    "version": { "type": "string" },
+    "sample_id": { "type": "string" },
+    "events": {
       "type": "array",
-      "items": {"type": "object"}
-    },
-    "edges": {
-      "type": "array",
-      "items": {"type": "object"}
+      "items": { "$ref": "#/definitions/event" }
     }
   },
-  "required": ["nodes", "edges"]
+  "required": ["version", "sample_id", "events"],
+  "definitions": {
+    "event": {
+      "type": "object",
+      "properties": {
+        "ihg_id": { "type": "string" },
+        "event_type": { "type": "string", "enum": ["SNV", "INDEL", "SV", "REPEAT", "PHASE_BLOCK", "REF_BLOCK"] },
+        "locus": {
+          "type": "object",
+          "properties": {
+            "chrom": { "type": "string" },
+            "pos": { "type": "integer" },
+            "end": { "type": ["integer", "null"] }
+          },
+          "required": ["chrom", "pos"]
+        },
+        "alleles": {
+          "type": "object",
+          "properties": {
+            "ref": { "type": "string" },
+            "alt": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["ref", "alt"]
+        },
+        "posterior": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "uncertainty": { "type": "number", "minimum": 0.0 },
+        "per_tech_support": {
+          "type": "object",
+          "properties": {
+            "ILLUMINA": { "$ref": "#/definitions/techsupport" },
+            "PACBIO": { "$ref": "#/definitions/techsupport" },
+            "ONT": { "$ref": "#/definitions/techsupport" }
+          }
+        },
+        "evidence_ptrs": { "type": "array", "items": { "type": "string" } },
+        "flags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["ihg_id", "event_type", "locus", "alleles", "posterior", "uncertainty"]
+    },
+    "techsupport": {
+      "type": "object",
+      "properties": {
+        "dp": { "type": "integer", "minimum": 0 },
+        "conf": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "notes": { "type": "string" }
+      },
+      "required": ["dp", "conf"]
+    }
+  }
 }

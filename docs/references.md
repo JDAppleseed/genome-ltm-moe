@@ -10,4 +10,4 @@
 ## Protein design (context)
 - ProteinMPNN (Science): https://www.science.org/doi/10.1126/science.add2187
 
-Note: this repository does not implement genome design or editing functionality.
+Note: this repository does not implement genome design or editing functionality, ethical usage of all processes is a required condition that must be fulfilled to maintain acess to this repo, unethical usage as defined by the repo owner "Jonathan Davanzo" in any manner or form will not be tolerated and will result in swift and critical action against the offending party.

@@ -11,16 +11,17 @@ Current genomic workflows often assume clean inputs and can be brittle in diffic
 - Cross-tech fusion: resolves conflicts using evidence, not heuristics
 - Reliability-first: explicit uncertainty + abstention + verifier loop
 - Publishable benchmarks: accuracy AND calibration AND coverage
+- Agentic orchestration (dry-lab only): ingest → analyze → benchmark → report
 
 ## Primary research aims (12–18 months)
 Aim 1 — Evidence-grounded modeling from raw reads  
 Deliverable: read→tile→memory pipeline, cross-tech alignment, stable training infra.
 
 Aim 2 — Multi-task interpretation heads + verifier  
-Deliverable: variant, splicing, regulatory, SV, phasing, reliability heads with calibration and abstention.
+Deliverable: variant, splicing, regulatory, SV, phasing, reliability heads with calibration, abstention, and verifier gating.
 
 Aim 3 — Benchmark suite + reproducibility  
-Deliverable: public-facing evaluation harness (risk-coverage curves, concordance), ablations, paper-ready artifacts.
+Deliverable: public-facing evaluation harness (risk-coverage curves, abstention coverage), ablations, paper-ready artifacts.
 
 ## Milestones
 - M1 (0–3 mo): synthetic & small public benchmarks; Stage 1 denoise

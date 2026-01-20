@@ -1,0 +1,21 @@
+training:
+  steps: 5
+  micro_batch_size: 1
+  train_batch_size: 1
+  grad_accum: 1
+  deepspeed:
+    enabled: false
+  precision:
+    bf16: false
+
+model:
+  type: "dna_mlm"
+  d_model: 128
+  n_layers: 2
+  n_heads: 2
+  d_ff: 256
+
+data:
+  synthetic: true
+  seq_len: 128
+  mask_prob: 0.15

@@ -1,9 +1,9 @@
 # Agentic Workflows Inspiration (CRISPR-GPT → GenomAIc)
 
 We adopt the multi-agent orchestration pattern:
-- Planner: decomposes user goals into tasks (data ingest, alignment, eval, reporting)
-- Executor: runs deterministic state machines for each task
-- Tool Providers: wraps external tools (alignment, QC, benchmark runners, literature search)
-- User Proxy: captures user constraints + approvals (IRB/DUA where needed)
+- Planner: decomposes goals into deterministic tasks (ingest → analyze → benchmark → report)
+- Executor: runs sequential, reproducible tasks with provenance tracking
+- Tool Providers: dry-lab utilities (ingest, benchmark, report)
+- Data-access policy: enforces path-based constraints from YAML configuration
 
 We explicitly exclude wet-lab automation.

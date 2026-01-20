@@ -14,7 +14,7 @@ GenomAIc: Evidence-Grounded, Multi-Modal Genome Interpretation from Raw Reads wi
 Repo anchors:
 - docs/architecture.md
 - docs/abstention_and_ambiguity.md
-- src/genomaic/models/task_bundle.py
+- src/genomeltm/models/heads/task_bundle.py
 
 ## 2. Related Work
 - Sequence-to-function models (AlphaGenome/Enformer-style)
@@ -32,8 +32,8 @@ Repo anchors:
 - Multi-head task suite + verifier loop
 
 Repo anchors:
-- src/genomaic/models/*
-- src/genomaic/pipeline/*
+- src/genomeltm/models/*
+- src/genomeltm/pipeline/*
 - configs/*.yaml
 
 ## 4. Model Architecture
@@ -43,9 +43,9 @@ Repo anchors:
 - Calibration + abstention
 
 Repo anchors:
-- src/genomaic/models/heads/*
-- src/genomaic/models/moe_router.py (if present)
-- src/genomaic/eval/risk_coverage.py
+- src/genomeltm/models/heads/*
+- src/genomeltm/models/moe_router.py (if present)
+- src/genomeltm/models/heads/risk_coverage.py
 
 ## 5. Training Curriculum
 Stage 0: infra & synthetic
@@ -69,8 +69,8 @@ Repo anchors:
 
 Repo anchors:
 - docs/eval_suite.md
-- src/genomaic/eval/*
-- src/genomaic/eval/risk_coverage.py
+- src/genomeltm/eval/*
+- src/genomeltm/eval/abstention.py
 
 ## 7. Results
 - Core benchmark tables
@@ -99,7 +99,7 @@ Repo anchors:
 Repo anchors:
 - pyproject.toml / requirements.txt
 - configs/*
-- src/genomaic/data/*
+- src/genomeltm/data/*
 
 ## 10. Ethics & Safety
 - Privacy-first handling of human reads

@@ -1,71 +1,34 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Optional, Dict
+
 import torch
 import torch.nn as nn
 
+from .common import MLP, AttnPool
+
+
 @dataclass
 class SplicingOutput:
-    # ΔPSI proxy (signed); larger magnitude implies stronger predicted splice change
-    delta_psi: torch.Tensor           # (B,)
-    # Probability of splice impact (binary proxy); calibrated
-    splice_impact_prob: torch.Tensor  # (B,)
-    splice_impact_logits: torch.Tensor  # (B,)
-    # Optional: predicted affected junction class (multi-class), if enabled
-    junction_logits: torch.Tensor     # (B, C) or None
-    confidence: torch.Tensor          # (B,)
+    # Example: delta PSI proxy logits
+    delta_psi_logits: torch.Tensor       # [B] or [B, J]
+    aux: Optional[Dict] = None
+
 
 class SplicingHead(nn.Module):
     """
-    Splicing impact head for sequence windows around junctions.
+    Stub splicing head: predicts splicing-impact proxy from sequence representation.
+    In a full system, you'd condition on exon/intron annotations and produce junction-level outputs.
     """
-    def __init__(self, d_in: int, hidden: int = 1024, junction_classes: int = 0):
+    def __init__(self, d_model: int, hidden: int = 1024, out_dim: int = 1, dropout: float = 0.1):
         super().__init__()
-        self.delta_net = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.classifier = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.log_temp = nn.Parameter(torch.zeros(()))
-        self.junction_head = None
-        if junction_classes and junction_classes > 0:
-            self.junction_head = nn.Sequential(
-                nn.LayerNorm(d_in),
-                nn.Linear(d_in, hidden),
-                nn.GELU(),
-                nn.Linear(hidden, junction_classes),
-            )
-        self.conf_head = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden // 2),
-            nn.GELU(),
-            nn.Linear(hidden // 2, 1),
-        )
+        self.pool = AttnPool(d_model)
+        self.mlp = MLP(d_model, hidden, out_dim, dropout=dropout)
 
-    def forward(self, delta_emb: torch.Tensor) -> SplicingOutput:
-        """
-        delta_emb: (B, d_in) e.g., ALT-REF embedding around junction window
-        """
-        delta_psi = self.delta_net(delta_emb).squeeze(-1)
-
-        logits = self.classifier(delta_emb).squeeze(-1)
-        temp = torch.exp(self.log_temp).clamp(0.5, 5.0)
-        splice_impact_logits = logits / temp
-        splice_impact_prob = torch.sigmoid(splice_impact_logits)
-
-        junction_logits = self.junction_head(delta_emb) if self.junction_head is not None else None
-
-        confidence = torch.sigmoid(self.conf_head(delta_emb).squeeze(-1))
-
-        return SplicingOutput(
-            delta_psi=delta_psi,
-            splice_impact_prob=splice_impact_prob,
-            splice_impact_logits=splice_impact_logits,
-            junction_logits=junction_logits,
-            confidence=confidence,
-        )
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> SplicingOutput:
+        pooled = self.pool(x, mask=mask)
+        logits = self.mlp(pooled)
+        if logits.shape[-1] == 1:
+            logits = logits[:, 0]
+        return SplicingOutput(delta_psi_logits=logits, aux={"head": "splicing"})

@@ -1,0 +1,6 @@
+model:
+  name: genome-ltm-moe-v2-gb300
+  experts: 32
+  hidden_size: 4096
+hardware:
+  target: gb300

@@ -3,15 +3,15 @@ set -euo pipefail
 
 VENV_DIR=${VENV_DIR:-.venv}
 
-if [[ ! -d "${VENV_DIR}" ]]; then
-  python -m venv "${VENV_DIR}"
-fi
-
 # shellcheck disable=SC1091
-source "${VENV_DIR}/bin/activate"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+source "${SCRIPT_DIR}/_venv_common.sh"
+
+ensure_venv "${VENV_DIR}"
+activate_venv "${VENV_DIR}"
 
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+install_editable "dev"
 
 python -c "import sys; import yaml; print(sys.executable); print('PyYAML', yaml.__version__)"
 

@@ -9,6 +9,7 @@ import torch
 
 from genomeltm.models.heads.risk_coverage import risk_coverage_curve
 from genomeltm.utils.config import load_yaml
+from genomeltm.utils.tensors import tensor_like
 
 
 @dataclass
@@ -20,35 +21,15 @@ class AbstentionEvalResult:
 
 
 def compute_confidence(payload: Dict[str, torch.Tensor]) -> torch.Tensor:
-    def _get_tensor(
-        payload: Dict[str, torch.Tensor],
-        key: str,
-        like: torch.Tensor | None = None,
-        default: float = 0.0,
-    ) -> torch.Tensor:
-        value = payload.get(key)
-        dtype = None
-        if like is not None:
-            dtype = like.dtype if like.is_floating_point() else torch.float32
-        if value is None:
-            if like is not None:
-                return torch.full_like(like, float(default), dtype=dtype)
-            return torch.tensor(float(default), dtype=torch.float32)
-        if not torch.is_tensor(value):
-            value = torch.as_tensor(value, device=like.device if like is not None else None, dtype=dtype)
-        if like is not None and value.shape != like.shape:
-            value = value.expand_as(like)
-        return value
-
     like = None
     for key in ("abstain_logit", "uncertainty_logit", "conflict_logit", "correct"):
         candidate = payload.get(key)
         if candidate is not None:
             like = candidate
             break
-    abstain_logit = _get_tensor(payload, "abstain_logit", like=like, default=0.0)
-    uncertainty_logit = _get_tensor(payload, "uncertainty_logit", like=like, default=0.0)
-    conflict_logit = _get_tensor(payload, "conflict_logit", like=like, default=0.0)
+    abstain_logit = tensor_like(payload.get("abstain_logit"), like, default=0.0)
+    uncertainty_logit = tensor_like(payload.get("uncertainty_logit"), like, default=0.0)
+    conflict_logit = tensor_like(payload.get("conflict_logit"), like, default=0.0)
     abstain_prob = torch.sigmoid(abstain_logit)
     uncertainty_prob = torch.sigmoid(uncertainty_logit)
     conflict_prob = torch.sigmoid(conflict_logit)

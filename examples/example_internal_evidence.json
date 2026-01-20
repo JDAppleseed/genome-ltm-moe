@@ -1,0 +1,7 @@
+{
+  "tile_id": "tile-001",
+  "evidence": [
+    "Variant observed in sample A.",
+    "Associated phenotype reported in dataset B."
+  ]
+}

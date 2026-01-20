@@ -1,0 +1,6 @@
+model:
+  name: genome-ltm-moe-v1-b200
+  experts: 16
+  hidden_size: 3072
+hardware:
+  target: b200

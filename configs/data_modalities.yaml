@@ -1,0 +1,5 @@
+modalities:
+  - name: genome_sequence
+    description: "Raw nucleotide sequences."
+  - name: clinical_notes
+    description: "De-identified clinical text."

@@ -1,72 +1,32 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Optional, Dict
+
 import torch
 import torch.nn as nn
 
+from .common import MLP, AttnPool
+
+
 @dataclass
 class RegulatoryOutput:
-    # Continuous regulatory effect score (signed)
-    effect_score: torch.Tensor           # (B,)
-    # Probability that this variant/region alters regulatory activity
-    effect_prob: torch.Tensor            # (B,)
-    effect_logits: torch.Tensor          # (B,)
-    # Optional multi-task track prediction (e.g., accessibility, TF binding), if enabled
-    track_pred: torch.Tensor             # (B, T) or None
-    confidence: torch.Tensor             # (B,)
+    # Multi-track regulatory predictions (e.g., accessibility/TF binding proxies)
+    track_logits: torch.Tensor          # [B, T]
+    aux: Optional[Dict] = None
+
 
 class RegulatoryHead(nn.Module):
     """
-    Regulatory effect head. Can be used as:
-    - delta_emb input (ALT-REF embedding)
-    - or direct region embedding for predicting tracks.
+    Stub regulatory head: pooled representation -> multi-track outputs.
+    Replace with windowed / multi-resolution heads later.
     """
-    def __init__(self, d_in: int, hidden: int = 1024, n_tracks: int = 0):
+    def __init__(self, d_model: int, n_tracks: int = 256, hidden: int = 2048, dropout: float = 0.1):
         super().__init__()
-        self.effect_net = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.classifier = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden),
-            nn.GELU(),
-            nn.Linear(hidden, 1),
-        )
-        self.log_temp = nn.Parameter(torch.zeros(()))
-        self.track_head = None
-        if n_tracks and n_tracks > 0:
-            self.track_head = nn.Sequential(
-                nn.LayerNorm(d_in),
-                nn.Linear(d_in, hidden),
-                nn.GELU(),
-                nn.Linear(hidden, n_tracks),
-            )
-        self.conf_head = nn.Sequential(
-            nn.LayerNorm(d_in),
-            nn.Linear(d_in, hidden // 2),
-            nn.GELU(),
-            nn.Linear(hidden // 2, 1),
-        )
+        self.pool = AttnPool(d_model)
+        self.mlp = MLP(d_model, hidden, n_tracks, dropout=dropout)
 
-    def forward(self, emb: torch.Tensor) -> RegulatoryOutput:
-        """
-        emb: (B, d_in)
-        """
-        effect_score = self.effect_net(emb).squeeze(-1)
-
-        logits = self.classifier(emb).squeeze(-1)
-        temp = torch.exp(self.log_temp).clamp(0.5, 5.0)
-        effect_logits = logits / temp
-        effect_prob = torch.sigmoid(effect_logits)
-
-        track_pred = self.track_head(emb) if self.track_head is not None else None
-        confidence = torch.sigmoid(self.conf_head(emb).squeeze(-1))
-
-        return RegulatoryOutput(
-            effect_score=effect_score,
-            effect_prob=effect_prob,
-            effect_logits=effect_logits,
-            track_pred=track_pred,
-            confidence=confidence,
-        )
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> RegulatoryOutput:
+        pooled = self.pool(x, mask=mask)
+        logits = self.mlp(pooled)  # [B,T]
+        return RegulatoryOutput(track_logits=logits, aux={"n_tracks": logits.shape[-1]})

@@ -1,0 +1,14 @@
+schema_version: 1
+model:
+  type: "dna_mlm"
+  d_model: 512
+  n_layers: 4
+  n_heads: 8
+  d_ff: 2048
+training:
+  steps: 1000
+  micro_batch_size: 2
+  train_batch_size: 32
+data:
+  synthetic: true
+  seq_len: 1024

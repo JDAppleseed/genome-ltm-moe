@@ -1,25 +1,29 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
-import torch
+from typing import Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
 
 
 @dataclass
 class RiskCoverageResult:
-    coverage: torch.Tensor  # [N]
-    risk: torch.Tensor      # [N]
+    coverage: "torch.Tensor"  # [N]
+    risk: "torch.Tensor"      # [N]
 
 
 def risk_coverage_curve(
-    correct: torch.Tensor,            # [B] bool/int
-    confidence: torch.Tensor,         # [B] float
+    correct: "torch.Tensor",            # [B] bool/int
+    confidence: "torch.Tensor",         # [B] float
     n_points: int = 50
 ) -> RiskCoverageResult:
     """
     Produces a risk-coverage curve by sweeping confidence thresholds.
     risk = 1 - accuracy among retained predictions.
     """
+    import torch
+
     correct = correct.bool()
     conf = confidence.float()
 

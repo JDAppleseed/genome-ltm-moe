@@ -6,25 +6,14 @@ from typing import Dict
 import torch
 
 
-@dataclass
-class ExpertUtilization:
-    counts: torch.Tensor
-    normalized: torch.Tensor
-    overflow_rate: float
+@dataclass(frozen=True)
+class UtilizationSummary:
+    total_tokens: int
+    per_expert: Dict[int, int]
 
 
-def summarize_expert_utilization(counts: torch.Tensor) -> ExpertUtilization:
-    counts = counts.float()
-    total = counts.sum().clamp(min=1.0)
-    normalized = counts / total
-    overflow = float((counts == 0).float().mean().item())
-    return ExpertUtilization(counts=counts, normalized=normalized, overflow_rate=overflow)
-
-
-def log_expert_utilization(metrics: ExpertUtilization) -> Dict[str, float]:
-    log = {
-        "expert_overflow_rate": metrics.overflow_rate,
-    }
-    for idx, value in enumerate(metrics.normalized.tolist()):
-        log[f"expert_{idx}_fraction"] = value
-    return log
+def summarize_utilization(expert_counts: torch.Tensor) -> UtilizationSummary:
+    counts = expert_counts.detach().cpu().to(torch.int64)
+    total = int(counts.sum().item())
+    per_expert = {idx: int(counts[idx].item()) for idx in range(counts.numel())}
+    return UtilizationSummary(total_tokens=total, per_expert=per_expert)

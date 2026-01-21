@@ -1,0 +1,5 @@
+schema_version: 1
+fusion:
+  d_model: 512
+  mode: "mean"
+  dropout: 0.1

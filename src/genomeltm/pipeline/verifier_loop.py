@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
-import torch
+if TYPE_CHECKING:
+    import torch
 
 from genomeltm.utils.config import load_yaml
 from genomeltm.utils.tensors import tensor_like
@@ -11,28 +12,31 @@ from genomeltm.utils.tensors import tensor_like
 
 @dataclass
 class VerifierPolicy:
-    max_passes: int = 4
-    abstain_threshold: float = 0.8
-    conflict_threshold: float = 0.8
-    uncertainty_threshold: float = 0.8
+    max_reruns: int = 2
+    abstain_threshold: float = 0.5
+    conflict_threshold: float = 0.5
+    support_threshold: float = 0.5
+    confidence_threshold: float = 0.5
 
 
 @dataclass
 class VerifierResult:
-    posterior: torch.Tensor
-    confidence: torch.Tensor
-    escalate_mask: torch.Tensor
-    abstained: torch.Tensor
+    posterior: "torch.Tensor"
+    confidence: "torch.Tensor"
+    escalate_mask: "torch.Tensor"
+    abstained: "torch.Tensor"
 
 
 def load_verifier_policy(path: str = "configs/verifier_policy.yaml") -> VerifierPolicy:
     cfg = load_yaml(path)
-    policy = cfg.get("policy", cfg)
+    policy = cfg.get("verifier", cfg)
+    thresholds = policy.get("thresholds", {})
     return VerifierPolicy(
-        max_passes=int(policy.get("max_passes", policy.get("passes_max", 4))),
-        abstain_threshold=float(policy.get("abstain_threshold", 0.8)),
-        conflict_threshold=float(policy.get("conflict_threshold", 0.8)),
-        uncertainty_threshold=float(policy.get("uncertainty_threshold", 0.8)),
+        max_reruns=int(policy.get("max_reruns", 2)),
+        abstain_threshold=float(thresholds.get("abstain", 0.5)),
+        conflict_threshold=float(thresholds.get("conflict", 0.5)),
+        support_threshold=float(thresholds.get("support", 0.5)),
+        confidence_threshold=float(thresholds.get("confidence", 0.5)),
     )
 
 
@@ -46,7 +50,7 @@ def _extract_reliability(expert_outputs: Any) -> Optional[Any]:
 
 def verifier_loop(
     verifier: Callable[..., Any],
-    tile_emb: torch.Tensor,
+    tile_emb: "torch.Tensor",
     retrieved_ctx: Optional[Any],
     expert_outputs: Optional[Any],
     passes_max: Optional[int] = None,
@@ -63,7 +67,10 @@ def verifier_loop(
     capped at policy.max_passes and can abstain definitively.
     """
     policy = policy or load_verifier_policy(policy_path)
-    max_passes = min(policy.max_passes, passes_max or policy.max_passes)
+    max_passes = min(policy.max_reruns, passes_max or policy.max_reruns)
+    escalation_level = 0
+
+    import torch
 
     post = None
     conf = None
@@ -84,7 +91,7 @@ def verifier_loop(
             abstained = (
                 (abstain_prob > policy.abstain_threshold)
                 | (conflict_prob > policy.conflict_threshold)
-                | (uncertainty_prob > policy.uncertainty_threshold)
+                | (uncertainty_prob > policy.support_threshold)
             )
             escalate = abstained if escalate is None else (escalate | abstained)
         else:
@@ -94,7 +101,14 @@ def verifier_loop(
             break
 
         if rerun_fn is not None and escalate is not None and escalate.any():
-            rerun = rerun_fn(tile_emb=tile_emb, retrieved_ctx=retrieved_ctx, expert_outputs=expert_outputs, escalate=escalate)
+            escalation_level += 1
+            rerun = rerun_fn(
+                tile_emb=tile_emb,
+                retrieved_ctx=retrieved_ctx,
+                expert_outputs=expert_outputs,
+                escalate_mask=escalate,
+                escalation_level=escalation_level,
+            )
             tile_emb = rerun.get("tile_emb", tile_emb)
             retrieved_ctx = rerun.get("retrieved_ctx", retrieved_ctx)
             expert_outputs = rerun.get("expert_outputs", expert_outputs)

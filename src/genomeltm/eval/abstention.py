@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 
-import torch
+if TYPE_CHECKING:
+    import torch
 
 from genomeltm.models.heads.risk_coverage import risk_coverage_curve
 from genomeltm.utils.config import load_yaml
@@ -14,13 +15,14 @@ from genomeltm.utils.tensors import tensor_like
 
 @dataclass
 class AbstentionEvalResult:
-    coverage: torch.Tensor
-    accuracy: torch.Tensor
-    risk: torch.Tensor
-    confidence: torch.Tensor
+    coverage: "torch.Tensor"
+    accuracy: "torch.Tensor"
+    risk: "torch.Tensor"
+    confidence: "torch.Tensor"
 
 
-def compute_confidence(payload: Dict[str, torch.Tensor]) -> torch.Tensor:
+def compute_confidence(payload: Dict[str, "torch.Tensor"]) -> "torch.Tensor":
+    import torch
     like = None
     for key in ("abstain_logit", "uncertainty_logit", "conflict_logit", "correct"):
         candidate = payload.get(key)
@@ -37,7 +39,8 @@ def compute_confidence(payload: Dict[str, torch.Tensor]) -> torch.Tensor:
     return 1.0 - combined.max(dim=0).values
 
 
-def run_abstention_eval(payload: Dict[str, torch.Tensor], n_points: int = 50) -> AbstentionEvalResult:
+def run_abstention_eval(payload: Dict[str, "torch.Tensor"], n_points: int = 50) -> AbstentionEvalResult:
+    import torch
     correct = payload["correct"].bool()
     confidence = compute_confidence(payload)
     curve = risk_coverage_curve(correct=correct, confidence=confidence, n_points=n_points)
@@ -50,7 +53,8 @@ def run_abstention_eval(payload: Dict[str, torch.Tensor], n_points: int = 50) ->
     )
 
 
-def _load_payload(path: Path) -> Dict[str, torch.Tensor]:
+def _load_payload(path: Path) -> Dict[str, "torch.Tensor"]:
+    import torch
     payload = torch.load(path, map_location="cpu")
     if not isinstance(payload, dict):
         raise ValueError("Expected a dict payload with correctness + reliability logits")
@@ -58,6 +62,7 @@ def _load_payload(path: Path) -> Dict[str, torch.Tensor]:
 
 
 def main(argv: list[str] | None = None) -> None:
+    import torch
     parser = argparse.ArgumentParser(description="Abstention-aware evaluation")
     parser.add_argument("--config", type=str, default="configs/abstention_eval.yaml")
     parser.add_argument("--input", type=str, default=None)

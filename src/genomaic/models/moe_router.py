@@ -49,3 +49,31 @@ class MoEBlock(nn.Module):
                 continue
             outputs = outputs + expert(x) * mask
         return outputs, routing
+
+
+@dataclass
+class MoEStats:
+    load_balance_loss: torch.Tensor
+    expert_utilization: torch.Tensor
+
+
+class MoERouter(nn.Module):
+    def __init__(self, d_model: int, num_experts: int, temperature: float = 1.0):
+        super().__init__()
+        self.num_experts = num_experts
+        self.temperature = temperature
+        self.gate = nn.Linear(d_model, num_experts)
+
+    def forward(self, x: torch.Tensor) -> Tuple[MoERouting, MoEStats]:
+        logits = self.gate(x) / self.temperature
+        scores = torch.softmax(logits, dim=-1)
+        top1 = torch.argmax(scores, dim=-1, keepdim=True)
+        dispatch = torch.zeros_like(scores)
+        dispatch.scatter_(dim=-1, index=top1, src=torch.ones_like(top1, dtype=scores.dtype))
+        expert_counts = dispatch.sum(dim=(0, 1))
+        combine = dispatch
+        routing = MoERouting(dispatch_mask=dispatch, combine_weights=combine, expert_counts=expert_counts)
+        load_balance = (expert_counts / expert_counts.sum().clamp_min(1.0)) * self.num_experts
+        load_balance_loss = torch.mean((load_balance - 1.0) ** 2)
+        stats = MoEStats(load_balance_loss=load_balance_loss, expert_utilization=expert_counts)
+        return routing, stats

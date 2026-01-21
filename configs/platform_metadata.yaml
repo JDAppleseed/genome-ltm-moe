@@ -1,0 +1,5 @@
+schema_version: 1
+platform:
+  num_platforms: 4
+  embedding_dim: 32
+  dropout: 0.1

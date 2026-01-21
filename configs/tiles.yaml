@@ -1,0 +1,28 @@
+schema_version: 1
+tiles:
+  tile_bp: 24000
+  stride_bp: 6000
+  reference_build: "hg38"
+  include_chrM: true
+  include_contigs: null
+  exclude_contigs: []
+  multi_res:
+    enabled: false
+    levels:
+      - name: "fine"
+        tile_bp: 24000
+        stride_bp: 6000
+      - name: "medium"
+        tile_bp: 100000
+        stride_bp: 25000
+      - name: "coarse"
+        tile_bp: 1000000
+        stride_bp: 250000
+retrieval:
+  deterministic:
+    enabled: true
+    neighbor_tiles: 8
+  learned:
+    enabled: true
+    top_k: 512
+    index_backend: "stub"

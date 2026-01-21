@@ -116,6 +116,74 @@ This repository is a **full research stack**, including:
 
 ---
 
+## Architecture: Tier A/B/C
+
+- **Tier A (Local encoder)**: SSM/long-conv encoders produce tile embeddings from read-aligned inputs.
+- **Tier B (Retrieval memory)**: ANN-based retrieval over genome-wide tile embeddings for 10M–100M effective context.
+- **Tier C (Lightweight fusion)**: cross-tile fusion conditions downstream task heads.
+
+Tile spec v1: `tile_bp=24000`, `stride_bp=6000` (75% overlap), configured in `configs/tiles.yaml`.
+
+MoE routing is learned end-to-end; no hard-coded biological routing rules are used.
+
+SV scope is **evidence synthesis** only (not primary SV calling).
+
+Training is **SLURM-first**, with optional cloud wrappers.
+
+---
+
+## Quickstart
+
+```bash
+scripts/dev/bootstrap_env.sh
+scripts/validate_configs.py --all
+scripts/dev/smoke_check.sh
+```
+
+---
+
+## Torch optional
+
+Core config and data modules import without torch. Training, model, and pipeline
+components that require torch raise actionable errors if torch is missing.
+
+---
+
+## Safety boundaries
+
+This repository is for interpretation and evidence synthesis only. It does **not**
+implement genome synthesis, editing, or CRISPR execution workflows.
+
+---
+
+## Repo structure
+
+- `src/genomaic`: primary GenomAIc codebase
+- `src/genomeltm`: legacy/parallel research scaffolds
+- `configs`: YAML configuration files with schema headers
+- `scripts`: CLI tools (data build, validation, launch)
+- `docs`: architecture and phase documentation
+- `tests`: unit + integration tests
+
+---
+
+## Tile + index build
+
+```bash
+python scripts/data/build_tiles.py --config configs/tiles.yaml --contigs data/contigs.tsv --out-dir data/tiles
+python scripts/data/build_tile_index.py --tiles data/tiles/tiles.jsonl --out-dir data/index --embedding-dim 512
+```
+
+---
+
+## CPU smoke (torch installed)
+
+```bash
+python -m genomaic.train.run --config configs/training_phase1_selfsup.yaml
+```
+
+---
+
 ## What GenomAIc Does *Not* Do
 
 ❌ Genome synthesis  

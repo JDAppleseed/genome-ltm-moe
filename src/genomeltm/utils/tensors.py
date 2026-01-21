@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-import torch
+if TYPE_CHECKING:
+    import torch
 
 
 def tensor_like(
     value: Any,
-    like: torch.Tensor | None,
+    like: "torch.Tensor" | None,
     *,
     default: float = 0.0,
-    device: torch.device | None = None,
-    dtype: torch.dtype | None = None,
-) -> torch.Tensor:
+    device: "torch.device" | None = None,
+    dtype: "torch.dtype" | None = None,
+) -> "torch.Tensor":
+    import torch
     resolved_device = device or (like.device if like is not None else None)
     resolved_dtype = dtype
     if resolved_dtype is None:

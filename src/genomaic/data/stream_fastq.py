@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import gzip
 from pathlib import Path
-from typing import Iterable, Iterator, List, Optional
+from typing import Iterable, Iterator, List, Optional, TYPE_CHECKING
 
-import torch
-from torch.utils.data import IterableDataset
+try:
+    from torch.utils.data import IterableDataset
+except ModuleNotFoundError:  # pragma: no cover - handled in training entrypoints
+    IterableDataset = object
+
+if TYPE_CHECKING:
+    import torch
 
 from genomaic.data.manifest import ShardEntry
 
@@ -45,7 +50,9 @@ class FastqStreamingDataset(IterableDataset):
                     return
 
 
-def encode_sequences(seqs: List[str], vocab: dict[str, int], max_len: int) -> torch.Tensor:
+def encode_sequences(seqs: List[str], vocab: dict[str, int], max_len: int):
+    import torch
+
     ids = torch.full((len(seqs), max_len), vocab["N"], dtype=torch.long)
     for i, seq in enumerate(seqs):
         for j, ch in enumerate(seq[:max_len]):

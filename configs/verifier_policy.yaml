@@ -1,6 +1,14 @@
-policy:
-  name: verifier-policy
-  max_passes: 4
-  abstain_threshold: 0.8
-  conflict_threshold: 0.8
-  uncertainty_threshold: 0.8
+schema_version: 1
+verifier:
+  enabled: true
+  max_reruns: 2
+  rerun_policy: "retrieval_escalation"
+  escalation:
+    learned_top_k_multiplier: 4
+    deterministic_neighbor_add: 8
+    fusion_mode_on_escalate: "cross_attention_fusion"
+  thresholds:
+    abstain: 0.5
+    conflict: 0.5
+    support: 0.5
+    confidence: 0.5
